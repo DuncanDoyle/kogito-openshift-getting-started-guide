@@ -142,7 +142,7 @@ The Data Index Service provides the back bone for all of the Kogito search, insi
 
 The Data Index Service can be installed both from the Kogito Operator UI in the OpenShift Console and the `kogito` client. In this guide we will use the `kogito` client.
 
-. From a terminal, install the Kogito Data Index Service with the command: `kogito install data-index -e KOGITO_PROTOBUF_WATCH=true`
+. From a terminal, install the Kogito Data Index Service with the command: `kogito install data-index`
 . The response in the terminal states that, because no Infinispan and Kafka information was provided in the command, the required Infinispan and Kafka infrastructure will be automatically deployed if it does not yet exist. However, since we've already deployed this infrastructure, the Kogito Operator will make sure that the Data Index Service is provisioned with the configuration settings required to connect to our existing infrastructure.
 +
 NOTE: It would have been possible to deploy the entire Kogito Infrastructure by simply deploying the Kogito Data Index Service. However, in this guide we want to be explicit and show you all of the individual components, and their management commands, that build up a Kogito application.
@@ -183,7 +183,7 @@ To work with the Kogito Travel Agency application and deploy it into our `kogito
 . In a terminal, move to a directory in which you would like to clone and store the Kogito Travel Agency application.
 . Execute the following command to clone the repository to your local filesystem: `git clone https://github.com/kiegroup/kogito-travel-agency-tutorial.git`
 
-The cloned repository contains a number of different projects, each of them increasing in complexity. In this guide, we will be using the projects `06-kogito-travel-agency` and `06-kogito-visas`, as these are the most ellaborate.
+The cloned repository contains a number of different projects, each of them increasing in complexity. In this guide, we will be using the projects `08-kogito-travel-agency` and `08-kogito-visas`, as these are the most elaborate.
 
 
 == Creating the Kogito Services
@@ -198,24 +198,44 @@ To deploy our Kogito application to OpenShift, we can again use the Kogito Opera
 . Service: a Kubernetes internal load-balancer to serve the application Pods.
 . Route: exposes the Service at a hostname.
 
-To deploy a Kogito service/applicatio that supports binary builds, we can again use the Kogito Operator.
+To deploy a Kogito service/application that supports binary builds, we can again use the Kogito Operator.
 
-**TODO** Finish this section when binary builds are supported in the operator.
 . In a terminal, create a new Kogito Service for the `kogito-travel-agency` application using the following command: `kogito deploy-service kogito-travel-agency ...........    `
-. Navigate to the Kogito Operator in the OpenShift console. Navigate to the _Kogito Service_ tab. Click on the `kogito-travel-agency` CR.
-. Navigate to _Builds -> Build Configs_, observe that a new `kogito-travel-agency` `BuildConfig` has been created.
-. Go back to the terminal, and create a new Kogito Service for the `kogito-visas` application with the following command: `kogit deploy-service kogito-visas .......`
-. Navigate to the Kogito Operator in the OpenShift console. Navigate to the _Kogito Service_ tab. Click on the `kogito-visas` CR.
-. Navigate to _Builds -> Build Configs_, observe that a new `kogito-visas` `BuildConfig` has been created.
++
+----
+kogito deploy-service kogito-travel-agency https://github.com/DuncanDoyle/kogito-travel-agency-tutorial -b kogito-0.8.0 -c 08-kogito-travel-agency --install-infinispan=Always --install-kafka=Always -e MP_MESSAGING_OUTGOING_VISAAPPLICATIONS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_INCOMING_VISASAPPROVED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_INCOMING_VISASREJECTED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_PROCESSINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_USERTASKINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_VARIABLES_EVENTS_BOOTSTRAP_SERVERS=
+----
++
+[NOTE]
+====
+We specify the environment variables that we want the Operator to populate with the values of the current environment. In this case we specify the environment variables that configure the location of the Kafka bootstrap servers.
+When the _Deployment Config_ of our service is created, the Operator will configure these environment variables to point to the location of the Kafka environment we deployed earlier.
+====
 
-Note that the Operator will dynamically create the `DeploymentConfig`, `Service` and `Route` for our applications when their first build has successfully completed.
+. Navigate to the Kogito Operator in the OpenShift console. Navigate to the _Kogito Service_ tab. Click on the `kogito-travel-agency` CR.
+. Navigate to _Builds -> Build Configs_, observe that a new `kogito-travel-agency-binary` `BuildConfig` has been created.
+. Go back to the terminal, and create a new Kogito Service for the `kogito-visas` application with the following command:
++
+----
+kogito deploy-service kogito-visas https://github.com/DuncanDoyle/kogito-travel-agency-tutorial -b kogito-0.8.0 -c 08-kogito-visas --install-infinispan=Always --install-kafka=Always -e MP_MESSAGING_INCOMING_VISAAPPLICATIONS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_VISASAPPROVED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_VISASREJECTED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_PROCESSINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_USERTASKINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_VARIABLES_EVENTS_BOOTSTRAP_SERVERS=
+----
+. Navigate to the Kogito Operator in the OpenShift console. Navigate to the _Kogito Service_ tab. Click on the `kogito-visas` CR.
+. Navigate to _Builds -> Build Configs_, observe that a new `kogito-visas-binary` `BuildConfig` has been created.
+
+[NOTE]
+====
+The Operator will dynamically create the `DeploymentConfig`, `Service` and `Route` for our applications when their first build has successfully completed.
+====
 
 ## Building the projects
 
 Before we can deploy our application onto OpenShift, we first need to compile and build the binaries.
 
-NOTE: Kogito provides a S2I, or Source-to-Image, build configuration that allows one to build the project directly from a Git repository on the OpenShift platform itself.
+[NOTE]
+====
+Kogito provides an S2I, or Source-to-Image, build configuration that allows one to build the project directly from a Git repository on the OpenShift platform itself.
 In this guide however, we will be building our project locally to show the _developer experience_ of working with a Kogito project on a development machine and pushing to the cloud.
+====
 
 Since the Kogito Travel Agency application is built on Quarkus, we provide 2 ways in which we can build and compile the project:
 
@@ -226,7 +246,7 @@ In this guide we will use the JDK-mode as the standard build mode. In the extra 
 
 ### Kogito Travel Agency Application
 
-. Navigate to the `06-kogito-travel-agency` directory: `cd 06-kogito-travel-agency`
+. Navigate to the `08-kogito-travel-agency` directory: `cd 08-kogito-travel-agency`
 . Build the project using Maven with the following command: `mvn clean package`
 . Inspect the `target` folder that has been created: `ls target` (Linux/macOS) or `dir target` (Windows)
 
@@ -240,107 +260,101 @@ The directory contains, among other things:
 . `kogito-travel-agency-1.0-SNAPSHOT-runner.jar`: being an executable jar. Be aware that it’s not an über-jar as the dependencies are copied into the `target/lib` directory.
 . `lib`: directory containing the project dependencies.
 
-We will send the _runner_ JAR and the library directory to the Kogito Travel Agency Binary Build on OpenShift.
+The _runner_ JAR and the library directory are needed for the Kogito Travel Agency Binary Build on OpenShift.
+However, the Kogito Binary Build allows us to send the entire `target` directory to the builder image.
+The builder image will filter out the required assets to run and successfully complete the build.
 
-. Prepare for a binary build of the `kogito-travel-agency` application on OpenShift. On your local machine, create a `kogito-travel-agency` directory in, for example, your temporary folder. This would be `/tmp/kogito-travel-agency` on Linux or macOS:
+. From the `08-kogito-travel-agency` directory, run the following command to push the artefacts to OpenShift and start the Binary Build of the application:
 +
-```
-mkdir /tmp/kogito-travel-agency
-```
+----
+$ oc start-build kogito-travel-agency-binary --from-dir=target/
+----
 +
-. Copy the executable application JAR, the runner JAR, and the lib folder of your application to the directory.
+You will see the following output:
 +
-```
-$ cp -r target/kogito-travel-agency-1.0-SNAPSHOT-runner.jar target/lib /tmp/kogito-travel-agency
-```
-+
-. Deploy the application to OpenShift:
-+
-```
-$ oc start-build kogito-travel-agency --from-dir=/tmp/kogito-travel-agency
-Output
-Uploading directory "/tmp/kogito-travel-agency" as binary input for the build ...
+----
+Uploading directory "target/" as binary input for the build ...
 ....
 Uploading finished
 build.build.openshift.io/kogito-travel-agency-1 started
-```
-+
+----
+
 . Check the logs of the builder pod:
 +
-```
-$ oc logs -f build/kogito-travel-agency-1
-```
+----
+$ oc logs -f build/kogito-travel-agency-binary-1
+----
 +
 . Once your binary build is finished, it will push the result to the `kogito-travel-agency` ImageStream (the ImageStream that was created by the Operator), which will trigger a new deployment.
-. Navigate to _Workloads -> Deployment Configs -> kogito-travel-agency_, Observe that a new deployment is being provisioned.
+. Navigate to _Workloads -> Deployment Configs -> kogito-travel-agency_. Observe that a new deployment is being provisioned.
 . Navigate to _Networking -> Routes_. Click on the URL in the Location column of the `kogito-travel-agency`, which will bring you to the main page of the Kogito Travel Agency application.
 +
 image:images/kogito-travel-agency-app.png[]
 
-
-**TODO** SHOULD WE ADD A DESCRIPTION ON HOW TO GET THE ROUTES VIA THE COMMAND LINE???
-
-. When the *builder* build and *application* build have finished, the Deployment Config has been created and the Pod is up and running, retrieve the route to you Kogito Travel Agency application with the following command (you can also find the route via the OpenShift Console if you ):
+. Alternatively, the route of the application can also be retrieved via the `oc` client:
 +
-```
-$ oc get route
-NAME                   HOST/PORT                                                                                             PATH   SERVICES               PORT   TERMINATION   WILDCARD
-kogito-travel-agency   kogito-travel-agency-kogito-operator-lab-user1.apps.cluster-rdam-4a35.rdam-4a35.example.opentlc.com          kogito-travel-agency   http                 None
-```
+----
+oc get route/kogito-travel-agency
+----
 +
-. Access the Kogito application deployed on OpenShift using your browser. You should see the same screen as the one you saw when you access the application locally.
+Which will show an output similar to this:
 +
-image:images/kogito-advanced-travel-agency-openshift.png[]
-
-
+----
+NAME                   HOST/PORT                                                                                        PATH   SERVICES               PORT   TERMINATION   WILDCARD
+kogito-travel-agency   kogito-travel-agency-kogito-travel-agency.apps.cluster-rdam-dbe2.rdam-dbe2.example.opentlc.com          kogito-travel-agency   http                 None
+----
 
 
 ### Kogito Visas Application
 
 We can now do the same for the `kogito-visas` application.
 
-. Navigate to the `06-kogito-visas` directory: `cd 06-kogito-visas`
+. Navigate to the `08-kogito-visas` directory: `cd 08-kogito-visas`
 . Build the project using Maven with the following command: `mvn clean package`
-. Prepare for a binary build of the `kogito-visas` application on OpenShift. On your local machine, create a `kogito-visas` directory in, for example, your temporary folder. This would be `/tmp/kogito-visas` on Linux or macOS:
+. After the Maven build has finished, run the following command to push the artefacts to OpenShift and start the Binary Build of the application:
 +
-```
-mkdir /tmp/kogito-visas
-```
+----
+$ oc start-build kogito-visas-binary --from-dir=target/
+----
 +
-. Copy the executable application JAR, the runner JAR, and the lib folder of your application to the directory.
+You will see the following output:
 +
-```
-$ cp -r target/kogito-visas-1.0-SNAPSHOT-runner.jar target/lib /tmp/kogito-visas
-```
-+
-. Deploy the application to OpenShift:
-+
-```
-$ oc start-build kogito-visas --from-dir=/tmp/kogito-visas
+----
 Output
-Uploading directory "/tmp/kogito-visas" as binary input for the build ...
+Uploading directory "target/" as binary input for the build ...
 ....
 Uploading finished
 build.build.openshift.io/kogito-visas-1 started
-```
+----
 +
 . Check the logs of the builder pod:
 +
-```
-$ oc logs -f build/kogito-visas-1
-```
+----
+$ oc logs -f build/kogito-visas-binary-1
+----
 +
 . Once your binary build is finished, it will push the result to the `kogito-visas` ImageStream (the ImageStream that was created by the Operator), which will trigger a new deployment.
 . Navigate to _Workloads -> Deployment Configs -> kogito-visas_, Observe that a new deployment is being provisioned.
 . Navigate to _Networking -> Routes_. Click on the URL in the Location column of the `kogito-visas`, which will bring you to the main page of the Kogito Travel Agency application.
 +
 image:images/kogito-visas-app.png[]
+. Again, alternatively, the route of the application can also be retrieved via the `oc` client:
++
+----
+oc get route/kogito-visas
+----
++
+Which will show an output similar to this:
++
+----
+NAME           HOST/PORT                                                                                PATH   SERVICES       PORT   TERMINATION   WILDCARD
+kogito-visas   kogito-visas-kogito-travel-agency.apps.cluster-rdam-dbe2.rdam-dbe2.example.opentlc.com          kogito-visas   http                 None
+----
 
 
+== Running the Demo
 
-
-
-
+In this section we will walk you through running the Kogito Travel Agency demo/tutorial you've just provisioned to OpenShift.
 
 
 
