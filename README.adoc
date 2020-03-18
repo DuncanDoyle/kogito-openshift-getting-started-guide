@@ -208,10 +208,10 @@ To deploy our Kogito application to OpenShift, we can again use the Kogito Opera
 
 To deploy a Kogito service/application that supports binary builds, we can again use the Kogito Operator.
 
-. In a terminal, create a new Kogito Service for the `kogito-travel-agency` application using the following command: `kogito deploy-service kogito-travel-agency ...........    `
+. In a terminal, create a new Kogito Service for the `kogito-travel-agency` application using the following command:
 +
 ----
-kogito deploy-service kogito-travel-agency https://github.com/DuncanDoyle/kogito-travel-agency-tutorial -b kogito-0.8.0 -c 08-kogito-travel-agency --install-infinispan=Always --install-kafka=Always -e MP_MESSAGING_OUTGOING_VISAAPPLICATIONS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_INCOMING_VISASAPPROVED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_INCOMING_VISASREJECTED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_PROCESSINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_USERTASKINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_VARIABLES_EVENTS_BOOTSTRAP_SERVERS=
+kogito deploy-service kogito-travel-agency --install-infinispan=Always --install-kafka=Always -e MP_MESSAGING_OUTGOING_VISAAPPLICATIONS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_INCOMING_VISASAPPROVED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_INCOMING_VISASREJECTED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_PROCESSINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_USERTASKINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_VARIABLES_EVENTS_BOOTSTRAP_SERVERS=
 ----
 +
 [NOTE]
@@ -225,7 +225,7 @@ When the _Deployment Config_ of our service is created, the Operator will config
 . Go back to the terminal, and create a new Kogito Service for the `kogito-visas` application with the following command:
 +
 ----
-kogito deploy-service kogito-visas https://github.com/DuncanDoyle/kogito-travel-agency-tutorial -b kogito-0.8.0 -c 08-kogito-visas --install-infinispan=Always --install-kafka=Always -e MP_MESSAGING_INCOMING_VISAAPPLICATIONS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_VISASAPPROVED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_VISASREJECTED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_PROCESSINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_USERTASKINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_VARIABLES_EVENTS_BOOTSTRAP_SERVERS=
+kogito deploy-service kogito-visas --install-infinispan=Always --install-kafka=Always -e MP_MESSAGING_INCOMING_VISAAPPLICATIONS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_VISASAPPROVED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_VISASREJECTED_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_PROCESSINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_USERTASKINSTANCES_EVENTS_BOOTSTRAP_SERVERS= -e MP_MESSAGING_OUTGOING_KOGITO_VARIABLES_EVENTS_BOOTSTRAP_SERVERS=
 ----
 . Navigate to the Kogito Operator in the OpenShift console. Navigate to the _Kogito Service_ tab. Click on the `kogito-visas` CR.
 . Navigate to _Builds -> Build Configs_, observe that a new `kogito-visas-binary` `BuildConfig` has been created.
