@@ -7,7 +7,7 @@
 :kie_server: link:https://localhost:8080/kie-server[KIE Server]
 :linkattrs:
 
-== Kogito Advanced
+== Kogito on OpenShift: Getting Started Guide
 
 In this advanced Kogito lab, we will deploy an advanced, multi-service, Kogito application, including Kogito support services and infrastructure.
 We will add persistence with Infinispan, messaging with Kafka and data-indexing and search with GraphQL
@@ -175,6 +175,14 @@ The application is comprised of 2 Kogito services/applications:
 - Travel Agency: the application in which you book a travel
 - Visas: the application in which a visa, if required, is managed
 
+The BPMN2 diagrams of these two Kogito Services is shown below:
+
+image:images/kogito-travel-agency-bpmn.png[]
+image:image/kogito-visas-bpmn.pngp[]
+
+As can be seen from the diagrams, the semantics of the `kogito-travel-agency` processes is to book a trip, including flight and hotel, to a destination on a given date.
+A ruleset defines whether a visa is required for the given destination. The visa approval logic is implemented by the `kogito-visas` service.
+
 These 2 services expose RESTful APIs, which are fully generated from the project's business assets (BPMN2 process definitions in this case).
 Internally they communicate via messaging, in particular Apache Kafka. Also the logic to interact with Kafka to produce and consume messages is fully generated from the BPMN2 process definitions.
 
@@ -289,7 +297,7 @@ $ oc logs -f build/kogito-travel-agency-binary-1
 . Navigate to _Workloads -> Deployment Configs -> kogito-travel-agency_. Observe that a new deployment is being provisioned.
 . Navigate to _Networking -> Routes_. Click on the URL in the Location column of the `kogito-travel-agency`, which will bring you to the main page of the Kogito Travel Agency application.
 +
-image:images/kogito-travel-agency-app.png[]
+image:images/kogito-travel-agency-application.png[]
 
 . Alternatively, the route of the application can also be retrieved via the `oc` client:
 +
@@ -356,29 +364,148 @@ kogito-visas   kogito-visas-kogito-travel-agency.apps.cluster-rdam-dbe2.rdam-dbe
 
 In this section we will walk you through running the Kogito Travel Agency demo/tutorial you've just provisioned to OpenShift.
 
+As stated earlier, the aim of the application is to book a trip to a certain destination, including flight and hotel.
+A ruleset defines whether a visa is required for the given destination. The visa approval logic is implemented by the `kogito-visas` service.
 
+We will now walk through the end-to-end scenario in which a user books a trip to the United States, and requires a visa.
 
-
-. Create a new Travel using the Kogito Travel Agency application WEB-UI, or send a RESTful request using cURL, for example like this:
+. In the OpenShift Console, with your `kogito-travel-agency` project selected, navigate to _Networking -> Routes_ and click on the _Location_ of the `kogito-travel-agency` application to navigate to the application's UI.
 +
-```
-{
-   "traveller":{
-      "firstName":"Jan",
-      "lastName":"Kowalski",
-      "email":"jan@email.com",
-      "nationality":"Polish",
-      "address":{
-         "street":"Polna",
-         "city":"Krakow",
-         "zipCode":"32-000",
-         "country":"Poland"
-      }
-   },
-   "trip":{
-      "country":"US",
-      "city":"New York",
-      "begin":"2019-11-04T00:00:00.000+02:00",
-      "end":"2019-11-07T00:00:00.000+02:00"
-   }
+image:images/openshift-kogito-routes.png[]
++
+image:images/kogito-travel-agency-application.png[]
+. Click on the `+ Plan new trip` button to create a new trip.
+. Fill in the following details. To make sure that our trip requires a visa we set the _Nationality_ to `Polish` and the destination _Country_ of the trip to `US`:
+image:images/kogito-travel-agency-plan-new-trip.png[]
+. The new trip will be shown in the UI. Note that this data is coming from the
++
+image:images/kogito-travel-agency-new-trip-created.png[]
+. In the new trip, click on the `Tasks` button to open the tasks of this process.
++
+image:images/kogito-travel-agency-task-visaapplication.png[]
+. Click on the `Apply` button. In the next screen enter a random _Passport number_ and a _Duration_ of `40`. Click on the _Submit application_ button.
++
+image:images/kogito-travel-agency-task-visaapplication-form.png[]
+. In the OpenShift Console, with your `kogito-travel-agency` project selected, navigate to _Networking -> Routes_ and click on the _Location_ of the `kogito-visas` application to navigate to the application's UI. You will see the visa application listed. Note that this process was started via a message sent through Apache Kafka from the Travel Agency application to the Visas application.
++
+image:images/kogito-visas-application.png[]
+. Click on the _Approval_ button. In the pop-up form, click on the _Approve_ button to approve the visa application.
++
+image:images/kogito-visas-task-approval.png[]
+. Go back to the _Kogito Travel Application_, you will see that the visa has been approved:
++
+image:images/kogito-travel-agency-visa-approved.png[]
+. Click on the _Tasks_ button. In the pop-up, click on the _Complete_ button.
++
+image:images/kogito-travel-agency-task-confirm-travel.png[]
+. The travel is now complete.
++
+image:images/kogito-travel-agency-travel-complete.png[]
+
+With the application completed, we can now inspect the data that created and stored by the DataIndex Service.
+In Kogito, the _Data Index Service_ allows us to search on _domain data_. In the case of our application, we can therefore search, for example, for `Travels` and `VisaApplications`.
+Kogito also allows us to search for `ProcessInstances` and `UserTaskInstances` if we want to have a more technical view of the underlying processes and tasks.
+
+Furthermore, the _GraphQL_ interface also allows us to do complex, full-text, searches over our business data.
+
+. In the OpenShift Console, with your `kogito-travel-agency` project selected, navigate to _Networking -> Routes_ and click on the _Location_ of the `kogito-data-index` application to navigate to the Graph_i_QL interface of the _Data Index Service_.
++
+image:images/kogito-data-index-graphiql.png[]
+. Use the following GraphQL query to retrieve details about our trip:
++
+----
+{ Travels {
+  id, traveller {
+    email
+    firstName
+    lastName
+    nationality
+  }, trip {
+    begin
+    city
+    country
+    end
+    visaRequired
+  }
 }
+----
++
+image:images/kogito-data-index-travels.png[]
+. We can also add a query that only retrieves with a `lastName` _like_ `Chop*`.
++
+----
+{ Travels (where: {traveller: {lastName: {like: "Chop*"}}}) {
+  id, traveller {
+    email
+    firstName
+    lastName
+    nationality
+  }, trip {
+    begin
+    city
+    country
+    end
+    visaRequired
+  }
+} }
+----
+. Next, use the following query to retrieve the `VisaApplications` and their details:
++
+----
+{ VisaApplications {
+  visaApplication {
+    approved
+    city
+    country
+    duration
+    firstName
+    lastName
+    nationality
+    passportNumber
+  }
+} }
+----
++
+image:images/kogito-data-index-visaapplications.png[]
+
+Having looked at the domain data, we can now look at a more technical data via the `ProcessInstances` and `UserTaskInstances`.
+
+. Enter the following query in the _Data Index Service_ UI to list all `ProcessInstances`:
++
+----
+{ ProcessInstances {
+  id,
+  processId,
+  processName,
+  state,
+  nodes {
+    name,
+    type,
+    enter,
+    exit
+  }
+} }
+----
++
+image:images/kogito-data-index-process-instances.png[]
+. To search for `UserTaskInstances`, we can use the following query:
++
+----
+{ UserTaskInstances {
+  name,
+  priority,
+  processId,
+  processInstanceId
+} }
+----
++
+image:images/kogito-data-index-usertask-instances.png[]
+
+== Conclusion
+
+In this guide you've walked through the setup and provisioning of a Kogito application on OpenShift.
+You have seen how the _Kogito Operator_ configures and manages the lifecycle of the Kogito infrastucture components and support services, like _Infinispan_ (persistence), _Apache Kafka_ (messaging) and the _Data Index Service_ (search).
+
+After compiling the two projects, you've used the Kogito Binary Build functionality to package the Kogito application in two containers on OpenShift.
+
+Finally, you've run the full demo, demonstrating the process, rules, messaging, and search capabilities of cloud-native business automation with Kogito and Quarkus on OpenShift.
